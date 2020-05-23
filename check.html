@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>视频列表</title>
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=0" />
+	<meta charset='UTF-8'> 
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+	<script src="https://fdk.c0v0c.com/data.js?t=1590053403"></script>
+</head>
+<body>
+	<div id='result'>
+		<div id="progress">
+			<progress value="0" max="100"></progress>
+			<span id="progressCurrent">0</span>/<span id="progressMax">0</span>
+		</div>
+		<div>Result</div>
+	</div>
+	<script type="text/javascript">
+		window.onload = checkJob;
+
+		function checkJob(){
+			if(data.length < 0){
+				$('#result').append('<div>无数据</div>');
+				return;
+			}
+
+			$('#progress progress').attr('max', data.length);
+			$('#progress #progressMax').text(data.length);
+
+			check(0);
+		}
+
+		function check(i){
+			console.log(i);
+			if(i >= data.length){
+				checkFinish();
+				return;
+			}
+			var current = data[i];
+			var title = current.name;
+
+			//获取所有要检查的链接
+			var url = [];
+			for(j in current.urls){
+				url.push(current.urls[j].url);
+			};
+			if(current.url){
+				url.push(current.url);
+			}
+
+			console.log(url);
+
+			var urlLenght = url.length;
+			var urlCount = 0;
+			if(urlLenght < 1){
+				nextCheck(i)
+			}
+			for(var j in url){
+				var urlj = url[j];
+				var success = function(response) {
+					var url = urlj;
+			        return function () {
+			            if(/啊叻？视频不见了？/.test(response)){
+							printErrorUrl(title, url, '啊叻？视频不见了？');
+						}
+
+						urlCount++;
+						if(urlCount >= urlLenght){
+							nextCheck(i)
+						}
+			        };
+				}
+				var error = function(error) {
+			        var url = urlj;
+			        return function () {
+			            printErrorUrl(title, url, '请求失败');
+
+						urlCount++;
+						if(urlCount >= urlLenght){
+							nextCheck(i)
+						}
+			        };
+				}
+				$.ajax({
+					url: url[j]
+				})
+					.then(success())
+					.catch(error());	
+			}
+		}
+
+		function nextCheck(i){
+			$('#progress progress').attr('value', i+1);
+			$('#progress #progressCurrent').text(i+1);
+			setTimeout(() => {
+				check(++i);
+			}, 0);
+		}
+
+		function printErrorUrl(title, url, msg){
+			$('#result').append('<div>'+title+' '+url+' '+msg+'</div>');
+		}
+
+		function checkFinish(){
+			$('#result').append('<div>检查结束</div>');
+		}
+	</script>
+</body>
