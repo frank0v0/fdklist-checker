@@ -9,6 +9,10 @@
 </head>
 <body>
 	<div id='result'>
+		<div id="progress">
+			<progress value="0" max="100"></progress>
+			<span id="progressCurrent">0</span>/<span id="progressMax">0</span>
+		</div>
 		<div>Result</div>
 	</div>
 	<script type="text/javascript">
@@ -19,6 +23,10 @@
 				$('#result').append('<div>无数据</div>');
 				return;
 			}
+
+			$('#progress progress').attr('max', data.length);
+			$('#progress #progressMax').text(data.length);
+
 			check(0);
 		}
 
@@ -45,7 +53,7 @@
 			var urlLenght = url.length;
 			var urlCount = 0;
 			if(urlLenght < 1){
-				check(++i);
+				nextCheck(i)
 			}
 			for(j in url){
 				//请求
@@ -59,9 +67,7 @@
 
 						urlCount++;
 						if(urlCount >= urlLenght){
-							setTimeout(() => {
-								check(++i);
-							}, 200);
+							nextCheck(i)
 						}
 					})
 					.catch(function(error){
@@ -69,12 +75,18 @@
 
 						urlCount++;
 						if(urlCount >= urlLenght){
-							setTimeout(() => {
-								check(++i);
-							}, 200);
+							nextCheck(i)
 						}
 					});
 			}
+		}
+
+		function nextCheck(i){
+			$('#progress progress').attr('value', i+1);
+			$('#progress #progressCurrent').text(i+1);
+			setTimeout(() => {
+				check(++i);
+			}, 0);
 		}
 
 		function printErrorUrl(title, url, msg){
