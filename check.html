@@ -31,7 +31,7 @@
 		}
 
 		function check(i){
-			console.log(i);
+			//console.log(i);
 			if(i >= data.length){
 				checkFinish();
 				return;
@@ -48,7 +48,7 @@
 				url.push(current.url);
 			}
 
-			console.log(url);
+			//console.log(url);
 
 			var urlLenght = url.length;
 			var urlCount = 0;
@@ -57,11 +57,11 @@
 			}
 			for(var j in url){
 				var urlj = url[j];
-				var success = function(response) {
+				var success = function() {
 					var url = urlj;
-			        return function () {
-			            if(/啊叻？视频不见了？/.test(response)){
-							printErrorUrl(title, url, '啊叻？视频不见了？');
+			        return function (response) {
+			            if(/error\-text/.test(response)){
+							printErrorUrl(title, url, '页面返回错误提示：' + $(response).find('.error-text').text());
 						}
 
 						urlCount++;
@@ -70,10 +70,14 @@
 						}
 			        };
 				}
-				var error = function(error) {
+				var error = function() {
 			        var url = urlj;
-			        return function () {
-			            printErrorUrl(title, url, '请求失败');
+			        return function (error) {
+			        	if(error.message) msg = error.message;
+			        	else if(error.status && error.statusText) msg = '请求失败：' + error.status + ',' + error.statusText;
+			        	else msg = "未知错误";
+
+			            printErrorUrl(title, url, msg);
 
 						urlCount++;
 						if(urlCount >= urlLenght){
@@ -82,7 +86,7 @@
 			        };
 				}
 				$.ajax({
-					url: url[j]
+					url: urlj
 				})
 					.then(success())
 					.catch(error());	
@@ -90,11 +94,14 @@
 		}
 
 		function nextCheck(i){
-			$('#progress progress').attr('value', i+1);
-			$('#progress #progressCurrent').text(i+1);
+			wait = 0;
+			if(i % 10 === 0) wait = 2000;
+
 			setTimeout(() => {
+				$('#progress progress').attr('value', i+1);
+				$('#progress #progressCurrent').text(i+1);
 				check(++i);
-			}, 500);
+			}, wait);
 		}
 
 		function printErrorUrl(title, url, msg){
